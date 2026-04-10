@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Professional Ad Portal</title>
+    <style>
+        :root {
+            --primary-color: #ff6600;
+            --bg-color: #ffffff;
+            --text-dark: #333333;
+            --gray-light: #f8f9fa;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+
+        /* Header Style */
+        header {
+            background: #fff;
+            padding: 15px 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        .admin-login-btn {
+            background: none;
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+            padding: 5px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        /* Main Content */
+        .container {
+            max-width: 900px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        /* Admin Form Section (Hidden by default) */
+        #adminPanel {
+            display: none;
+            background: var(--gray-light);
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 40px;
+            border-left: 5px solid var(--primary-color);
+        }
+
+        h2 { margin-top: 0; color: var(--text-dark); }
+
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 1rem;
+        }
+
+        .btn-submit {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: bold;
+            font-size: 1rem;
+        }
+
+        /* Ads Display Grid */
+        .ads-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .ad-card {
+            background: white;
+            border: 1px solid #eee;
+            padding: 20px;
+            border-radius: 12px;
+            transition: transform 0.2s;
+            position: relative;
+        }
+
+        .ad-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+        }
+
+        .ad-card h3 {
+            margin: 0 0 10px 0;
+            color: var(--primary-color);
+            font-size: 1.2rem;
+        }
+
+        .price {
+            color: #28a745;
+            font-weight: bold;
+            display: block;
+            margin: 10px 0;
+        }
+
+        .date {
+            font-size: 0.8rem;
+            color: #888;
+        }
+
+        .delete-btn {
+            background: #ff4444;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.7rem;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+
+    </style>
+</head>
+<body>
+
+<header>
+    <a href="#" class="logo">Min Ads Portal</a>
+    <button class="admin-login-btn" onclick="toggleAdmin()">Admin Login</button>
+</header>
+
+<div class="container">
+    <section id="adminPanel">
+        <h2>Post အသစ်တင်ရန်</h2>
+        <form id="adForm">
+            <input type="text" id="title" placeholder="ကြော်ငြာခေါင်းစဉ်" required>
+            <textarea id="description" placeholder="အသေးစိတ်ဖော်ပြချက်..." rows="4" required></textarea>
+            <input type="text" id="price" placeholder="ဈေးနှုန်း (ဥပမာ - ၁၅,၀၀၀ ကျပ်)">
+            <button type="submit" class="btn-submit">တင်မည်</button>
+        </form>
+    </section>
+
+    <div class="ads-grid" id="adsContainer">
+        </div>
+</div>
+
+<script>
+    const adForm = document.getElementById('adForm');
+    const adsContainer = document.getElementById('adsContainer');
+    const adminPanel = document.getElementById('adminPanel');
+    
+    // Admin စစ်ဆေးရန် (Password ကို '1234' လို့ သတ်မှတ်ထားပါတယ်)
+    let isAdmin = false;
+
+    function toggleAdmin() {
+        if(!isAdmin) {
+            let password = prompt("Admin Password ကို ရိုက်ထည့်ပါ:");
+            if(password === "1234") {
+                isAdmin = true;
+                adminPanel.style.display = "block";
+                alert("Welcome Admin!");
+                displayAds();
+            } else {
+                alert("Password မှားယွင်းနေပါသည်။");
+            }
+        } else {
+            isAdmin = false;
+            adminPanel.style.display = "none";
+            displayAds();
+        }
+    }
+
+    // Post တင်ခြင်း
+    adForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        
+        const title = document.getElementById('title').value;
+        const description = document.getElementById('description').value;
+        const price = document.getElementById('price').value;
+        const id = Date.now(); // Unique ID ပေးခြင်း
+
+        const newAd = { id, title, description, price, date: new Date().toLocaleDateString() };
+
+        let ads = localStorage.getItem('myAds') ? JSON.parse(localStorage.getItem('myAds')) : [];
+        ads.unshift(newAd);
+        localStorage.setItem('myAds', JSON.stringify(ads));
+
+        adForm.reset();
+        displayAds();
+    });
+
+    // Post များပြသခြင်း
+    function displayAds() {
+        let ads = localStorage.getItem('myAds') ? JSON.parse(localStorage.getItem('myAds')) : [];
+        adsContainer.innerHTML = '';
+
+        if(ads.length === 0) {
+            adsContainer.innerHTML = '<p style="color:#888;">ကြော်ငြာများ မရှိသေးပါ။</p>';
+            return;
+        }
+
+        ads.forEach(ad => {
+            const adCard = document.createElement('div');
+            adCard.className = 'ad-card';
+            adCard.innerHTML = `
+                ${isAdmin ? `<button class="delete-btn" onclick="deleteAd(${ad.id})">ဖျက်မည်</button>` : ''}
+                <h3>${ad.title}</h3>
+                <p>${ad.description}</p>
+                <span class="price">${ad.price}</span>
+                <div class="date">${ad.date}</div>
+            `;
+            adsContainer.innerHTML += adCard.outerHTML;
+        });
+    }
+
+    // Post ဖျက်ခြင်း
+    function deleteAd(id) {
+        if(confirm("ဒီ Post ကို ဖျက်မှာ သေချာပါသလား?")) {
+            let ads = JSON.parse(localStorage.getItem('myAds'));
+            ads = ads.filter(ad => ad.id !== id);
+            localStorage.setItem('myAds', JSON.stringify(ads));
+            displayAds();
+        }
+    }
+
+    // Initial Load
+    displayAds();
+</script>
+
+</body>
+</html>
