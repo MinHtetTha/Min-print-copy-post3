@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Min Copy & Print Portal - Drive Version</title>
+    <style>
+        :root { --primary: #ff6600; --bg: #ffffff; --light: #f4f4f4; }
+        body { font-family: sans-serif; margin: 0; background: var(--bg); padding-bottom: 50px; }
+        header { background: #fff; padding: 15px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1000; }
+        .logo { font-size: 1.5rem; font-weight: bold; color: var(--primary); cursor: pointer; }
+        
+        .container { max-width: 800px; margin: 20px auto; padding: 0 15px; }
+
+        /* Admin Section */
+        #adminPanel { display: none; background: var(--light); padding: 20px; border-radius: 12px; margin-bottom: 30px; border: 2px dashed var(--primary); }
+        input, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
+        .btn-post { background: var(--primary); color: white; border: none; padding: 14px; border-radius: 8px; width: 100%; font-weight: bold; margin-top: 10px; cursor: pointer; }
+
+        /* Swipe Gallery */
+        .ad-gallery-container { position: relative; width: 100%; background: #000; overflow: hidden; height: 300px; }
+        .ad-gallery { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scroll-behavior: smooth; height: 100%; }
+        .ad-gallery::-webkit-scrollbar { display: none; }
+        .ad-gallery-item { flex: 0 0 100%; width: 100%; scroll-snap-align: start; display: flex; align-items: center; justify-content: center; }
+        .ad-img { width: 100%; height: 100%; object-fit: contain; background: #eee; }
+
+        .ad-gallery-dots { position: absolute; bottom: 10px; left: 0; right: 0; display: flex; justify-content: center; gap: 5px; }
+        .dot { width: 8px; height: 8px; background: rgba(255,255,255,0.5); border-radius: 50%; }
+        .dot.active { background: white; transform: scale(1.2); }
+
+        .ad-card { border: 1px solid #eee; border-radius: 12px; overflow: hidden; margin-bottom: 25px; background: #fff; position: relative; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        .ad-content { padding: 15px; }
+        .ad-title { margin: 0 0 8px; color: var(--primary); font-size: 1.25rem; }
+        .price { color: #28a745; font-weight: bold; }
+        
+        .del-btn { position: absolute; top: 10px; right: 10px; background: red; color: white; border: none; padding: 6px 12px; border-radius: 6px; z-index: 20; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<header><div class="logo" id="mainLogo">Min Copy & Print</div></header>
+
+<div class="container">
+    <section id="adminPanel">
+        <h3>Admin: Google Drive Link သုံး၍ တင်ရန်</h3>
+        <form id="uploadForm">
+            <input type="text" id="title" placeholder="ခေါင်းစဉ်" required>
+            <textarea id="desc" placeholder="အကြောင်းအရာ..." rows="3"></textarea>
+            <input type="text" id="price" placeholder="ဈေးနှုန်း">
+            
+            <p style="font-size: 0.8rem; color: #666; margin-bottom: 5px;">Google Drive ပုံ Link များ ထည့်ရန် (Share settings ကို 'Anyone with link' လုပ်ထားပါ):</p>
+            <input type="text" id="img1" placeholder="ပုံ Link (၁) ထည့်ပါ">
+            <input type="text" id="img2" placeholder="ပုံ Link (၂) ထည့်ပါ (မရှိရင် ထားခဲ့ပါ)">
+            <input type="text" id="img3" placeholder="ပုံ Link (၃) ထည့်ပါ (မရှိရင် ထားခဲ့ပါ)">
+            
+            <button type="submit" class="btn-post">Post တင်မည်</button>
+        </form>
+    </section>
+
+    <div id="displayArea"></div>
+</div>
+
+<script>
+    const ADMIN_PASS = "1234";
+    let isAdmin = localStorage.getItem("isLogged") === "true";
+
+    // Logo Double Click
+    document.getElementById("mainLogo").addEventListener("dblclick", () => {
+        let p = prompt("Password:");
+        if(p === ADMIN_PASS) { isAdmin = !isAdmin; localStorage.setItem("isLogged", isAdmin); render(); }
+    });
+
+    // Google Drive Link ကို Web မှာ ပေါ်မည့် Direct Link အဖြစ် ပြောင်းပေးသည့် Function
+    function fixDriveLink(url) {
+        if (url.includes("drive.google.com")) {
+            const id = url.split("/d/")[1]?.split("/")[0] || url.split("id=")[1];
+            return id ? `https://lh3.googleusercontent.com/u/0/d/${id}` : url;
+        }
+        return url;
+    }
+
+    document.getElementById("uploadForm").addEventListener("submit", (e) => {
+        e.preventDefault();
+        
+        const links = [
+            document.getElementById("img1").value,
+            document.getElementById("img2").value,
+            document.getElementById("img3").value
+        ].filter(link => link.trim() !== "");
+
+        const post = {
+            id: Date.now(),
+            title: document.getElementById("title").value,
+            desc: document.getElementById("desc").value,
+            price: document.getElementById("price").value,
+            images: links.map(fixDriveLink) // Link ကို အလိုအလျောက် ပြင်ပြီးမှ သိမ်းမည်
+        };
+
+        let posts = JSON.parse(localStorage.getItem("myPosts") || "[]");
+        posts.unshift(post);
+        localStorage.setItem("myPosts", JSON.stringify(posts));
+        location.reload();
+    });
+
+    function updateDots(el, postId) {
+        const index = Math.round(el.scrollLeft / el.offsetWidth);
+        const dots = document.querySelectorAll(`#dots-${postId} .dot`);
+        dots.forEach((d, i) => d.classList.toggle('active', i === index));
+    }
+
+    function render() {
+        document.getElementById("adminPanel").style.display = isAdmin ? "block" : "none";
+        const posts = JSON.parse(localStorage.getItem("myPosts") || "[]");
+        document.getElementById("displayArea").innerHTML = posts.map(p => `
+            <div class="ad-card">
+                ${isAdmin ? `<button class="del-btn" onclick="del(${p.id})">ဖျက်မည်</button>` : ''}
+                <div class="ad-gallery-container">
+                    <div class="ad-gallery" onscroll="updateDots(this, ${p.id})">
+                        ${p.images.map(img => `
+                            <div class="ad-gallery-item">
+                                <img src="${img}" class="ad-img" onerror="this.src='https://via.placeholder.com/300?text=Check+Link+Settings'">
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="ad-gallery-dots" id="dots-${p.id}">
+                        ${p.images.map((_, i) => `<div class="dot ${i===0?'active':''}"></div>`).join('')}
+                    </div>
+                </div>
+                <div class="ad-content">
+                    <h4 class="ad-title">${p.title}</h4>
+                    <p style="white-space: pre-wrap;">${p.desc}</p>
+                    <div class="price">${p.price}</div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    window.del = (id) => {
+        if(confirm("ဖျက်မှာလား?")) {
+            let posts = JSON.parse(localStorage.getItem("myPosts")).filter(x => x.id !== id);
+            localStorage.setItem("myPosts", JSON.stringify(posts));
+            render();
+        }
+    };
+
+    render();
+</script>
+</body>
+</html>
