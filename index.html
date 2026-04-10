@@ -3,83 +3,89 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Min Copy & Print Portal v4.0</title>
+    <title>Min Copy & Print Portal</title>
     <style>
-        :root { --primary: #ff6600; --bg: #ffffff; --dark: #333; --light: #f4f4f4; }
-        body { font-family: sans-serif; margin: 0; background: var(--bg); color: var(--dark); padding-bottom: 50px; }
+        :root { --primary: #ff6600; --bg: #ffffff; --light: #f4f4f4; }
+        body { font-family: sans-serif; margin: 0; background: var(--bg); padding-bottom: 50px; }
         header { background: #fff; padding: 15px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1000; }
-        .logo { font-size: 1.5rem; font-weight: bold; color: var(--primary); cursor: pointer; user-select: none; }
+        .logo { font-size: 1.5rem; font-weight: bold; color: var(--primary); cursor: pointer; }
         
         .container { max-width: 800px; margin: 20px auto; padding: 0 15px; }
 
-        /* Admin Panel */
+        /* Admin Section */
         #adminPanel { display: none; background: var(--light); padding: 20px; border-radius: 12px; margin-bottom: 30px; border: 2px dashed var(--primary); }
         input, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
-        .btn-post { background: var(--primary); color: white; border: none; padding: 14px; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; margin-top: 10px; }
+        .btn-post { background: var(--primary); color: white; border: none; padding: 14px; border-radius: 8px; width: 100%; font-weight: bold; margin-top: 10px; }
 
-        /* --- Carousel (Swipe Gallery) Styles --- */
-        .ad-gallery-container { position: relative; width: 100%; border-bottom: 1px solid #eee; overflow: hidden; }
-        .ad-gallery { display: flex; gap: 0; overflow-x: auto; scroll-snap-type: x mandatory; scroll-behavior: smooth; }
-        .ad-gallery::-webkit-scrollbar { display: none; } /* Scrollbar ဖျောက်မည် */
-
-        .ad-gallery-item { flex: 0 0 100%; scroll-snap-align: center; height: 250px; cursor: pointer; position: relative; }
-        .ad-img { width: 100%; height: 100%; object-fit: cover; background: #f0f0f0; }
-
-        /* Gallery Indicators (Dots) */
-        .ad-gallery-dots { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); display: flex; gap: 6px; z-index: 5; }
-        .dot { width: 8px; height: 8px; background: rgba(255,255,255,0.5); border-radius: 50%; }
-        .dot.active { background: white; width: 10px; height: 10px; }
-
-        /* Ads List */
-        .ads-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
-        .ad-card { border: 1px solid #eee; border-radius: 12px; overflow: hidden; position: relative; background: #fff; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        .ad-content { padding: 15px; }
-        .ad-title { margin: 0 0 8px; color: var(--primary); font-size: 1.2rem; }
-        .price { color: #28a745; font-weight: bold; font-size: 1.1rem; }
+        /* --- Swipe Gallery Fix --- */
+        .ad-gallery-container { position: relative; width: 100%; background: #000; overflow: hidden; }
         
-        .file-link { display: block; margin-top: 10px; padding: 10px; background: #e7f3ff; color: #007bff; text-decoration: none; border-radius: 6px; text-align: center; font-size: 0.9rem; font-weight: bold; }
-        .del-btn { position: absolute; top: 10px; right: 10px; background: rgba(255,0,0,0.9); color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; z-index: 10; display: none; }
+        .ad-gallery { 
+            display: flex; 
+            overflow-x: auto; 
+            scroll-snap-type: x mandatory; 
+            -webkit-overflow-scrolling: touch; /* iOS swipe ချောအောင် */
+            scroll-behavior: smooth;
+        }
+        .ad-gallery::-webkit-scrollbar { display: none; } /* Scrollbar ဖျောက်ထားမယ် */
+
+        .ad-gallery-item { 
+            flex: 0 0 100%; /* တစ်ပုံချင်းစီကို screen အပြည့်ယူမယ် */
+            width: 100%;
+            scroll-snap-align: start; 
+            height: 300px; /* ပုံအမြင့် */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .ad-img { 
+            width: 100%; 
+            height: 100%; 
+            object-fit: contain; /* ပုံမရှုံ့အောင် contain သုံးမယ် */
+            background: #eee; 
+        }
+
+        /* Dots Indicator */
+        .ad-gallery-dots { 
+            position: absolute; bottom: 10px; left: 0; right: 0;
+            display: flex; justify-content: center; gap: 5px; 
+        }
+        .dot { width: 8px; height: 8px; background: rgba(255,255,255,0.5); border-radius: 50%; }
+        .dot.active { background: white; transform: scale(1.2); }
+
+        /* Card Styles */
+        .ad-card { border: 1px solid #eee; border-radius: 12px; overflow: hidden; margin-bottom: 20px; background: #fff; position: relative; }
+        .ad-content { padding: 15px; }
+        .ad-title { margin: 0 0 5px; color: var(--primary); font-size: 1.2rem; }
+        .price { color: #28a745; font-weight: bold; margin-top: 5px; }
+        
+        .del-btn { position: absolute; top: 10px; right: 10px; background: red; color: white; border: none; padding: 5px 10px; border-radius: 5px; z-index: 20; display: none; }
 
         /* Zoom Modal */
-        .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); }
-        .modal-content { margin: auto; display: block; max-width: 95%; max-height: 90%; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); border-radius: 8px; }
-        .close-btn { position: absolute; top: 20px; right: 30px; color: #fff; font-size: 40px; font-weight: bold; cursor: pointer; }
-
-        #storageWarn { display: none; background: #fff3cd; color: #856404; padding: 10px; border-radius: 8px; margin-bottom: 10px; text-align: center; font-size: 0.9rem; font-weight: bold; }
+        .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: #000; }
+        .modal-content { max-width: 100%; max-height: 100%; margin: auto; display: block; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
     </style>
 </head>
 <body>
 
-<header>
-    <div class="logo" id="mainLogo">Min Copy & Print</div>
-</header>
+<header><div class="logo" id="mainLogo">Min Copy & Print</div></header>
 
 <div class="container">
-    <div id="storageWarn">သတိပေးချက်: Storage ပြည့်ခါနီးနေပါပြီ။ Post အဟောင်းများ ဖျက်ပေးပါ။</div>
-
     <section id="adminPanel">
-        <h3>Admin Control Panel</h3>
         <form id="uploadForm">
             <input type="text" id="title" placeholder="ခေါင်းစဉ်" required>
-            <textarea id="desc" placeholder="အကြောင်းအရာ..." rows="3"></textarea>
+            <textarea id="desc" placeholder="အကြောင်းအရာ..."></textarea>
             <input type="text" id="price" placeholder="ဈေးနှုန်း">
-            
-            <label style="font-size: 0.8rem;">ဓာတ်ပုံများ (၃ ပုံအထိ ရွေးပါ၊ Auto Compressor ပါသည်):</label>
             <input type="file" id="imgInput" accept="image/*" multiple>
-            
-            <label style="font-size: 0.8rem;">အခြားဖိုင် (PDF, Doc, csv etc.):</label>
-            <input type="file" id="fileInput">
-            
             <button type="submit" class="btn-post">Post တင်မည်</button>
         </form>
     </section>
 
-    <div style="text-align:center; color:#888; margin-bottom:15px; font-size: 0.9rem;">--- ကြည့်ရှုသူများ မြင်ရမည့်ပုံစံ ---</div>
-    <div id="displayArea" class="ads-grid"></div>
+    <div id="displayArea"></div>
 </div>
 
-<div id="zoomModal" class="modal">
-    <span class="close-btn" onclick="closeModal()">&times;</span>
+<div id="zoomModal" class="modal" onclick="this.style.display='none'">
     <img class="modal-content" id="modalImg">
 </div>
 
@@ -87,46 +93,11 @@
     const ADMIN_PASS = "1234";
     let isAdmin = localStorage.getItem("isLogged") === "true";
 
-    // Logo Double Click Login/Logout
     document.getElementById("mainLogo").addEventListener("dblclick", () => {
-        if(!isAdmin) {
-            let p = prompt("Password ရိုက်ပါ:");
-            if(p === ADMIN_PASS) {
-                isAdmin = true;
-                localStorage.setItem("isLogged", "true");
-                render();
-            }
-        } else {
-            isAdmin = false;
-            localStorage.setItem("isLogged", "false");
-            render();
-        }
+        let p = prompt("Password:");
+        if(p === ADMIN_PASS) { isAdmin = !isAdmin; localStorage.setItem("isLogged", isAdmin); render(); }
     });
 
-    // Image Zoom Function
-    function openModal(src) {
-        document.getElementById("zoomModal").style.display = "block";
-        document.getElementById("modalImg").src = src;
-        window.history.pushState({modal: true}, "");
-    }
-
-    function closeModal() {
-        document.getElementById("zoomModal").style.display = "none";
-    }
-
-    // Indicator Dots ကို Update လုပ်သည့် Function
-    function updateDots(galleryEl, postId) {
-        const index = Math.round(galleryEl.scrollLeft / galleryEl.offsetWidth);
-        const dotsContainer = document.getElementById(`dots-${postId}`);
-        if(dotsContainer) {
-            const dots = dotsContainer.querySelectorAll('.dot');
-            dots.forEach((dot, i) => {
-                dot.classList.toggle('active', i === index);
-            });
-        }
-    }
-
-    // Image Compressor (Storage သက်သာအောင် ပုံကို ချုံ့ပေးသည်)
     async function compressImage(file) {
         return new Promise((resolve) => {
             const reader = new FileReader();
@@ -136,17 +107,14 @@
                 img.src = e.target.result;
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
+                    const max = 800;
+                    let w = img.width, h = img.height;
+                    if (w > h && w > max) { h *= max / w; w = max; }
+                    else if (h > max) { w *= max / h; h = max; }
+                    canvas.width = w; canvas.height = h;
                     const ctx = canvas.getContext('2d');
-                    let width = img.width;
-                    let height = img.height;
-                    const max = 800; // အများဆုံး 800px ထားမယ်
-
-                    if (width > height && width > max) { height *= max / width; width = max; }
-                    else if (height > max) { width *= max / height; height = max; }
-
-                    canvas.width = width; canvas.height = height;
-                    ctx.drawImage(img, 0, 0, width, height);
-                    resolve(canvas.toDataURL('image/jpeg', 0.6)); // 60% quality နဲ့ သိမ်းမယ်
+                    ctx.drawImage(img, 0, 0, w, h);
+                    resolve(canvas.toDataURL('image/jpeg', 0.6));
                 };
             };
         });
@@ -154,87 +122,69 @@
 
     document.getElementById("uploadForm").addEventListener("submit", async (e) => {
         e.preventDefault();
-        const imgInput = document.getElementById("imgInput");
-        const docFile = document.getElementById("fileInput").files[0];
-
-        // ၃ ပုံအထိပဲ ယူမယ်
-        const imgFiles = Array.from(imgInput.files).slice(0, 3);
-        const imgDataArray = await Promise.all(imgFiles.map(compressImage));
-
+        const files = Array.from(document.getElementById("imgInput").files).slice(0, 5);
+        const imgDataArray = await Promise.all(files.map(compressImage));
+        
         const post = {
             id: Date.now(),
             title: document.getElementById("title").value,
             desc: document.getElementById("desc").value,
             price: document.getElementById("price").value,
-            images: imgDataArray,
-            docData: docFile ? await new Promise(r => {
-                const rd = new FileReader(); rd.readAsDataURL(docFile); rd.onload = () => r(rd.result);
-            }) : "",
-            fileName: docFile ? docFile.name : ""
+            images: imgDataArray
         };
 
         let posts = JSON.parse(localStorage.getItem("myPosts") || "[]");
         posts.unshift(post);
-        
-        try {
-            localStorage.setItem("myPosts", JSON.stringify(posts));
-            location.reload();
-        } catch(err) {
-            alert("Storage ပြည့်နေပါတယ်။ Post အဟောင်းတချို့ အရင်ဖျက်ပေးပါ။");
-        }
+        localStorage.setItem("myPosts", JSON.stringify(posts));
+        location.reload();
     });
+
+    function updateDots(el, postId) {
+        const index = Math.round(el.scrollLeft / el.offsetWidth);
+        const dots = document.querySelectorAll(`#dots-${postId} .dot`);
+        dots.forEach((d, i) => d.classList.toggle('active', i === index));
+    }
 
     function render() {
         document.getElementById("adminPanel").style.display = isAdmin ? "block" : "none";
-        let posts = JSON.parse(localStorage.getItem("myPosts") || "[]");
-        const area = document.getElementById("displayArea");
-
-        // Storage Check
-        if (JSON.stringify(posts).length > 4000000) {
-            document.getElementById("storageWarn").style.display = "block";
-        } else {
-             document.getElementById("storageWarn").style.display = "none";
-        }
-
-        area.innerHTML = posts.map(p => `
+        const posts = JSON.parse(localStorage.getItem("myPosts") || "[]");
+        document.getElementById("displayArea").innerHTML = posts.map(p => `
             <div class="ad-card">
                 ${isAdmin ? `<button class="del-btn" style="display:block" onclick="del(${p.id})">ဖျက်မည်</button>` : ''}
-                
                 <div class="ad-gallery-container">
-                    <div class="ad-gallery" id="gallery-${p.id}" onscroll="updateDots(this, ${p.id})">
-                        ${p.images && p.images.length > 0 ? p.images.map(img => `
-                            <div class="ad-gallery-item" onclick="openModal('${img}')">
+                    <div class="ad-gallery" onscroll="updateDots(this, ${p.id})">
+                        ${p.images.map(img => `
+                            <div class="ad-gallery-item" onclick="event.stopPropagation(); zoom('${img}')">
                                 <img src="${img}" class="ad-img">
                             </div>
-                        `).join('') : '<div class="ad-gallery-item" style="height:100px; display:flex; align-items:center; justify-content:center; color:#ccc;">(ပုံမရှိပါ)</div>'}
+                        `).join('')}
                     </div>
-                    
-                    ${p.images && p.images.length > 1 ? `
-                        <div class="ad-gallery-dots" id="dots-${p.id}">
-                            ${p.images.map((_, i) => `<div class="dot ${i === 0 ? 'active' : ''}"></div>`).join('')}
-                        </div>
-                    ` : ''}
+                    <div class="ad-gallery-dots" id="dots-${p.id}">
+                        ${p.images.map((_, i) => `<div class="dot ${i===0?'active':''}"></div>`).join('')}
+                    </div>
                 </div>
-
                 <div class="ad-content">
                     <h4 class="ad-title">${p.title}</h4>
-                    <p style="margin:0; font-size:0.95rem;">${p.desc}</p>
+                    <p>${p.desc}</p>
                     <div class="price">${p.price}</div>
-                    ${p.docData ? `<a href="${p.docData}" download="${p.fileName}" class="file-link">📁 ဒေါင်းလုဒ်ဆွဲရန်: ${p.fileName}</a>` : ''}
                 </div>
             </div>
         `).join('');
     }
 
+    window.zoom = (src) => {
+        document.getElementById("modalImg").src = src;
+        document.getElementById("zoomModal").style.display = "block";
+    };
+
     window.del = (id) => {
-        if(confirm("ဖျက်မှာ သေချာလား?")) {
+        if(confirm("ဖျက်မှာလား?")) {
             let posts = JSON.parse(localStorage.getItem("myPosts")).filter(x => x.id !== id);
             localStorage.setItem("myPosts", JSON.stringify(posts));
             render();
         }
     };
 
-    window.onpopstate = () => closeModal();
     render();
 </script>
 </body>
