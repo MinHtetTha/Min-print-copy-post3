@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Min Copy & Print Portal</title>
+    <style>
+        :root { --primary: #ff6600; --bg: #ffffff; --dark: #333; --light: #f4f4f4; }
+        body { font-family: sans-serif; margin: 0; background: var(--bg); color: var(--dark); padding-bottom: 50px;}
+        header { background: #fff; padding: 15px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1000; }
+        .logo { font-size: 1.5rem; font-weight: bold; color: var(--primary); cursor: pointer; user-select: none; }
+        
+        .container { max-width: 800px; margin: 20px auto; padding: 0 15px; }
+
+        /* Admin Panel */
+        #adminPanel { display: none; background: var(--light); padding: 20px; border-radius: 12px; margin-bottom: 30px; border: 2px dashed var(--primary); }
+        input, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
+        .btn-post { background: var(--primary); color: white; border: none; padding: 14px; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; margin-top: 10px; }
+
+        /* Image Gallery in Card */
+        .ad-gallery { display: flex; gap: 0; overflow-x: auto; scroll-snap-type: x mandatory; scroll-behavior: smooth; border-bottom: 1px solid #eee; }
+        .ad-gallery::-webkit-scrollbar { display: none; }
+        .ad-gallery-item { flex: 0 0 100%; scroll-snap-align: center; height: 250px; cursor: pointer;}
+        .ad-img { width: 100%; height: 100%; object-fit: cover; background: #f0f0f0; }
+
+        /* Ads List */
+        .ads-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+        .ad-card { border: 1px solid #eee; border-radius: 12px; overflow: hidden; position: relative; background: #fff; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .ad-content { padding: 15px; }
+        .ad-title { margin: 0 0 8px; color: var(--primary); font-size: 1.2rem; }
+        .price { color: #28a745; font-weight: bold; font-size: 1.1rem; }
+        
+        .file-link { display: block; margin-top: 10px; padding: 10px; background: #e7f3ff; color: #007bff; text-decoration: none; border-radius: 6px; text-align: center; font-size: 0.9rem; font-weight: bold; }
+        .del-btn { position: absolute; top: 10px; right: 10px; background: rgba(255,0,0,0.9); color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; z-index: 10; display: none; }
+
+        /* Zoom Modal */
+        .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); }
+        .modal-content { margin: auto; display: block; max-width: 95%; max-height: 90%; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); border-radius: 8px; }
+        .close-btn { position: absolute; top: 20px; right: 30px; color: #fff; font-size: 40px; font-weight: bold; cursor: pointer; }
+
+        #storageWarn { display: none; background: #fff3cd; color: #856404; padding: 10px; border-radius: 8px; margin-bottom: 10px; text-align: center; font-size: 0.9rem; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="logo" id="mainLogo">Min Copy & Print</div>
+</header>
+
+<div class="container">
+    <div id="storageWarn">သတိပေးချက်: Storage ပြည့်ခါနီးနေပါပြီ။ Post အဟောင်းများ ဖျက်ပေးပါ။</div>
+
+    <section id="adminPanel">
+        <h3>Admin Control Panel</h3>
+        <form id="uploadForm">
+            <input type="text" id="title" placeholder="ခေါင်းစဉ်" required>
+            <textarea id="desc" placeholder="အကြောင်းအရာ..." rows="3"></textarea>
+            <input type="text" id="price" placeholder="ဈေးနှုန်း">
+            
+            <label style="font-size: 0.8rem;">ဓာတ်ပုံများ (၃ ပုံအထိ ရွေးပါ):</label>
+            <input type="file" id="imgInput" accept="image/*" multiple>
+            
+            <label style="font-size: 0.8rem;">အခြားဖိုင် (PDF, Doc, csv etc.):</label>
+            <input type="file" id="fileInput">
+            
+            <button type="submit" class="btn-post">Post တင်မည်</button>
+        </form>
+    </section>
+
+    <div style="text-align:center; color:#888; margin-bottom:15px;">--- ကြည့်ရှုသူများ မြင်ရမည့်ပုံစံ ---</div>
+    <div id="displayArea" class="ads-grid"></div>
+</div>
+
+<div id="zoomModal" class="modal">
+    <span class="close-btn" onclick="closeModal()">&times;</span>
+    <img class="modal-content" id="modalImg">
+</div>
+
+<script>
+    const ADMIN_PASS = "1234";
+    let isAdmin = localStorage.getItem("isLogged") === "true";
+
+    // Logo Double Click Login/Logout
+    document.getElementById("mainLogo").addEventListener("dblclick", () => {
+        if(!isAdmin) {
+            let p = prompt("Password ရိုက်ပါ:");
+            if(p === ADMIN_PASS) {
+                isAdmin = true;
+                localStorage.setItem("isLogged", "true");
+                render();
+            }
+        } else {
+            isAdmin = false;
+            localStorage.setItem("isLogged", "false");
+            render();
+        }
+    });
+
+    // Image Zoom Function
+    function openModal(src) {
+        document.getElementById("zoomModal").style.display = "block";
+        document.getElementById("modalImg").src = src;
+        window.history.pushState({modal: true}, "");
+    }
+
+    function closeModal() {
+        document.getElementById("zoomModal").style.display = "none";
+    }
+
+    // Image Compressor (Storage သက်သာအောင် ပုံကို ချုံ့ပေးသည်)
+    async function compressImage(file) {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = (e) => {
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    let width = img.width;
+                    let height = img.height;
+                    const max = 800; // အများဆုံး 800px ထားမယ်
+
+                    if (width > height && width > max) { height *= max / width; width = max; }
+                    else if (height > max) { width *= max / height; height = max; }
+
+                    canvas.width = width; canvas.height = height;
+                    ctx.drawImage(img, 0, 0, width, height);
+                    resolve(canvas.toDataURL('image/jpeg', 0.6)); // 60% quality နဲ့ သိမ်းမယ်
+                };
+            };
+        });
+    }
+
+    document.getElementById("uploadForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const imgInput = document.getElementById("imgInput");
+        const docFile = document.getElementById("fileInput").files[0];
+
+        // ၃ ပုံအထိပဲ ယူမယ်
+        const imgFiles = Array.from(imgInput.files).slice(0, 3);
+        const imgDataArray = await Promise.all(imgFiles.map(compressImage));
+
+        const post = {
+            id: Date.now(),
+            title: document.getElementById("title").value,
+            desc: document.getElementById("desc").value,
+            price: document.getElementById("price").value,
+            images: imgDataArray,
+            docData: docFile ? await new Promise(r => {
+                const rd = new FileReader(); rd.readAsDataURL(docFile); rd.onload = () => r(rd.result);
+            }) : "",
+            fileName: docFile ? docFile.name : ""
+        };
+
+        let posts = JSON.parse(localStorage.getItem("myPosts") || "[]");
+        posts.unshift(post);
+        
+        try {
+            localStorage.setItem("myPosts", JSON.stringify(posts));
+            location.reload();
+        } catch(err) {
+            alert("Storage ပြည့်နေပါတယ်။ Post အဟောင်းတချို့ အရင်ဖျက်ပေးပါ။");
+        }
+    });
+
+    function render() {
+        document.getElementById("adminPanel").style.display = isAdmin ? "block" : "none";
+        let posts = JSON.parse(localStorage.getItem("myPosts") || "[]");
+        const area = document.getElementById("displayArea");
+
+        // Storage Check
+        if (JSON.stringify(posts).length > 4000000) {
+            document.getElementById("storageWarn").style.display = "block";
+        }
+
+        area.innerHTML = posts.map(p => `
+            <div class="ad-card">
+                ${isAdmin ? `<button class="del-btn" style="display:block" onclick="del(${p.id})">ဖျက်မည်</button>` : ''}
+                <div class="ad-gallery">
+                    ${p.images && p.images.length > 0 ? p.images.map(img => `
+                        <div class="ad-gallery-item" onclick="openModal('${img}')">
+                            <img src="${img}" class="ad-img">
+                        </div>
+                    `).join('') : '<div class="ad-gallery-item"><img src="" class="ad-img" alt="No Image"></div>'}
+                </div>
+                <div class="ad-content">
+                    <h4 class="ad-title">${p.title}</h4>
+                    <p>${p.desc}</p>
+                    <div class="price">${p.price}</div>
+                    ${p.docData ? `<a href="${p.docData}" download="${p.fileName}" class="file-link">📁 Download File</a>` : ''}
+                </div>
+            </div>
+        `).join('');
+    }
+
+    window.del = (id) => {
+        if(confirm("ဖျက်မှာ သေချာလား?")) {
+            let posts = JSON.parse(localStorage.getItem("myPosts")).filter(x => x.id !== id);
+            localStorage.setItem("myPosts", JSON.stringify(posts));
+            render();
+        }
+    };
+
+    window.onpopstate = () => closeModal();
+    render();
+</script>
+</body>
+</html>
