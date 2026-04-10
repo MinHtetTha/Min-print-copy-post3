@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Min Copy & Print Portal</title>
+    <title>Min Copy & Print Portal v4.0</title>
     <style>
         :root { --primary: #ff6600; --bg: #ffffff; --dark: #333; --light: #f4f4f4; }
-        body { font-family: sans-serif; margin: 0; background: var(--bg); color: var(--dark); padding-bottom: 50px;}
+        body { font-family: sans-serif; margin: 0; background: var(--bg); color: var(--dark); padding-bottom: 50px; }
         header { background: #fff; padding: 15px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1000; }
         .logo { font-size: 1.5rem; font-weight: bold; color: var(--primary); cursor: pointer; user-select: none; }
         
@@ -17,11 +17,18 @@
         input, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
         .btn-post { background: var(--primary); color: white; border: none; padding: 14px; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; margin-top: 10px; }
 
-        /* Image Gallery in Card */
-        .ad-gallery { display: flex; gap: 0; overflow-x: auto; scroll-snap-type: x mandatory; scroll-behavior: smooth; border-bottom: 1px solid #eee; }
-        .ad-gallery::-webkit-scrollbar { display: none; }
-        .ad-gallery-item { flex: 0 0 100%; scroll-snap-align: center; height: 250px; cursor: pointer;}
+        /* --- Carousel (Swipe Gallery) Styles --- */
+        .ad-gallery-container { position: relative; width: 100%; border-bottom: 1px solid #eee; overflow: hidden; }
+        .ad-gallery { display: flex; gap: 0; overflow-x: auto; scroll-snap-type: x mandatory; scroll-behavior: smooth; }
+        .ad-gallery::-webkit-scrollbar { display: none; } /* Scrollbar ဖျောက်မည် */
+
+        .ad-gallery-item { flex: 0 0 100%; scroll-snap-align: center; height: 250px; cursor: pointer; position: relative; }
         .ad-img { width: 100%; height: 100%; object-fit: cover; background: #f0f0f0; }
+
+        /* Gallery Indicators (Dots) */
+        .ad-gallery-dots { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); display: flex; gap: 6px; z-index: 5; }
+        .dot { width: 8px; height: 8px; background: rgba(255,255,255,0.5); border-radius: 50%; }
+        .dot.active { background: white; width: 10px; height: 10px; }
 
         /* Ads List */
         .ads-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
@@ -57,7 +64,7 @@
             <textarea id="desc" placeholder="အကြောင်းအရာ..." rows="3"></textarea>
             <input type="text" id="price" placeholder="ဈေးနှုန်း">
             
-            <label style="font-size: 0.8rem;">ဓာတ်ပုံများ (၃ ပုံအထိ ရွေးပါ):</label>
+            <label style="font-size: 0.8rem;">ဓာတ်ပုံများ (၃ ပုံအထိ ရွေးပါ၊ Auto Compressor ပါသည်):</label>
             <input type="file" id="imgInput" accept="image/*" multiple>
             
             <label style="font-size: 0.8rem;">အခြားဖိုင် (PDF, Doc, csv etc.):</label>
@@ -67,7 +74,7 @@
         </form>
     </section>
 
-    <div style="text-align:center; color:#888; margin-bottom:15px;">--- ကြည့်ရှုသူများ မြင်ရမည့်ပုံစံ ---</div>
+    <div style="text-align:center; color:#888; margin-bottom:15px; font-size: 0.9rem;">--- ကြည့်ရှုသူများ မြင်ရမည့်ပုံစံ ---</div>
     <div id="displayArea" class="ads-grid"></div>
 </div>
 
@@ -105,6 +112,18 @@
 
     function closeModal() {
         document.getElementById("zoomModal").style.display = "none";
+    }
+
+    // Indicator Dots ကို Update လုပ်သည့် Function
+    function updateDots(galleryEl, postId) {
+        const index = Math.round(galleryEl.scrollLeft / galleryEl.offsetWidth);
+        const dotsContainer = document.getElementById(`dots-${postId}`);
+        if(dotsContainer) {
+            const dots = dotsContainer.querySelectorAll('.dot');
+            dots.forEach((dot, i) => {
+                dot.classList.toggle('active', i === index);
+            });
+        }
     }
 
     // Image Compressor (Storage သက်သာအောင် ပုံကို ချုံ့ပေးသည်)
@@ -173,23 +192,35 @@
         // Storage Check
         if (JSON.stringify(posts).length > 4000000) {
             document.getElementById("storageWarn").style.display = "block";
+        } else {
+             document.getElementById("storageWarn").style.display = "none";
         }
 
         area.innerHTML = posts.map(p => `
             <div class="ad-card">
                 ${isAdmin ? `<button class="del-btn" style="display:block" onclick="del(${p.id})">ဖျက်မည်</button>` : ''}
-                <div class="ad-gallery">
-                    ${p.images && p.images.length > 0 ? p.images.map(img => `
-                        <div class="ad-gallery-item" onclick="openModal('${img}')">
-                            <img src="${img}" class="ad-img">
+                
+                <div class="ad-gallery-container">
+                    <div class="ad-gallery" id="gallery-${p.id}" onscroll="updateDots(this, ${p.id})">
+                        ${p.images && p.images.length > 0 ? p.images.map(img => `
+                            <div class="ad-gallery-item" onclick="openModal('${img}')">
+                                <img src="${img}" class="ad-img">
+                            </div>
+                        `).join('') : '<div class="ad-gallery-item" style="height:100px; display:flex; align-items:center; justify-content:center; color:#ccc;">(ပုံမရှိပါ)</div>'}
+                    </div>
+                    
+                    ${p.images && p.images.length > 1 ? `
+                        <div class="ad-gallery-dots" id="dots-${p.id}">
+                            ${p.images.map((_, i) => `<div class="dot ${i === 0 ? 'active' : ''}"></div>`).join('')}
                         </div>
-                    `).join('') : '<div class="ad-gallery-item"><img src="" class="ad-img" alt="No Image"></div>'}
+                    ` : ''}
                 </div>
+
                 <div class="ad-content">
                     <h4 class="ad-title">${p.title}</h4>
-                    <p>${p.desc}</p>
+                    <p style="margin:0; font-size:0.95rem;">${p.desc}</p>
                     <div class="price">${p.price}</div>
-                    ${p.docData ? `<a href="${p.docData}" download="${p.fileName}" class="file-link">📁 Download File</a>` : ''}
+                    ${p.docData ? `<a href="${p.docData}" download="${p.fileName}" class="file-link">📁 ဒေါင်းလုဒ်ဆွဲရန်: ${p.fileName}</a>` : ''}
                 </div>
             </div>
         `).join('');
