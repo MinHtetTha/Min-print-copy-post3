@@ -3,31 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Min Ad & File Portal</title>
+    <title>Min Copy & Print Portal</title>
     <style>
-        :root { --primary: #ff6600; --bg: #ffffff; --dark: #333; --light: #f9f9f9; }
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--bg); color: var(--dark); }
-        header { background: #fff; padding: 15px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); sticky: top; z-index: 100; }
-        .logo { font-size: 1.4rem; font-weight: bold; color: var(--primary); cursor: pointer; user-select: none; }
+        :root { --primary: #ff6600; --bg: #ffffff; --dark: #333; --light: #f4f4f4; }
+        body { font-family: sans-serif; margin: 0; background: var(--bg); color: var(--dark); }
+        header { background: #fff; padding: 15px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1000; }
+        .logo { font-size: 1.5rem; font-weight: bold; color: var(--primary); cursor: pointer; user-select: none; }
         
         .container { max-width: 800px; margin: 20px auto; padding: 0 15px; }
-        #adminPanel { display: none; background: var(--light); padding: 20px; border-radius: 12px; margin-bottom: 30px; border: 1px solid #ddd; }
         
-        input, textarea { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
-        .btn-post { background: var(--primary); color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold; }
+        /* Admin Panel */
+        #adminPanel { display: none; background: var(--light); padding: 20px; border-radius: 12px; margin-bottom: 30px; border: 2px dashed var(--primary); }
+        input, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
+        .btn-post { background: var(--primary); color: white; border: none; padding: 14px; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; margin-top: 10px; }
 
-        .ads-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
-        .ad-card { border: 1px solid #eee; border-radius: 10px; overflow: hidden; position: relative; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .ad-img { width: 100%; height: 180px; object-fit: cover; background: #eee; }
+        /* Public View */
+        .ads-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+        .ad-card { border: 1px solid #eee; border-radius: 12px; overflow: hidden; position: relative; background: #fff; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .ad-img { width: 100%; height: 200px; object-fit: cover; background: #f0f0f0; }
         .ad-content { padding: 15px; }
-        .ad-title { margin: 0 0 10px; color: var(--primary); }
-        .price { color: #28a745; font-weight: bold; }
+        .ad-title { margin: 0 0 8px; color: var(--primary); font-size: 1.2rem; }
+        .price { color: #28a745; font-weight: bold; font-size: 1.1rem; }
         
-        /* File Download Link Style */
-        .file-link { display: inline-block; margin-top: 10px; padding: 8px 12px; background: #007bff; color: white; text-decoration: none; border-radius: 4px; font-size: 0.9rem; }
-        .file-link:hover { background: #0056b3; }
-
-        .del-btn { position: absolute; top: 10px; right: 10px; background: rgba(255,0,0,0.8); color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; display: none; }
+        .file-link { display: block; margin-top: 10px; padding: 10px; background: #e7f3ff; color: #007bff; text-decoration: none; border-radius: 6px; text-align: center; font-size: 0.9rem; font-weight: bold; }
+        
+        .del-btn { position: absolute; top: 10px; right: 10px; background: rgba(255,0,0,0.9); color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; z-index: 10; }
+        
+        .view-label { text-align: center; color: #888; margin-bottom: 15px; font-size: 0.9rem; border-top: 1px solid #eee; padding-top: 10px; }
     </style>
 </head>
 <body>
@@ -38,22 +40,20 @@
 
 <div class="container">
     <section id="adminPanel">
-        <h3>Admin: Post & File Upload</h3>
+        <h3 style="margin-top:0;">Admin Control</h3>
         <form id="uploadForm">
             <input type="text" id="title" placeholder="ခေါင်းစဉ်" required>
             <textarea id="desc" placeholder="အကြောင်းအရာ..." rows="3"></textarea>
             <input type="text" id="price" placeholder="ဈေးနှုန်း">
-            
-            <label>ဓာတ်ပုံတင်ရန်:</label>
+            <label style="font-size: 0.8rem;">ဓာတ်ပုံ (Auto Size ချပေးမည်):</label>
             <input type="file" id="imgInput" accept="image/*">
-            
-            <label>အခြားဖိုင်တင်ရန် (PDF, Doc, etc.):</label>
+            <label style="font-size: 0.8rem;">အခြားဖိုင် (PDF, Doc, etc.):</label>
             <input type="file" id="fileInput">
-            
             <button type="submit" class="btn-post">Post တင်မည်</button>
         </form>
     </section>
 
+    <div class="view-label">--- ကြည့်ရှုသူများ မြင်တွေ့ရမည့်ပုံစံ ---</div>
     <div id="displayArea" class="ads-grid"></div>
 </div>
 
@@ -61,17 +61,50 @@
     const ADMIN_PASS = "1234";
     let isAdmin = localStorage.getItem("isLogged") === "true";
 
-    // Double Click Logo for Login
+    // Logo ကို နှစ်ချက်နှိပ်ရင် Admin Panel အဖွင့်အပိတ်လုပ်မယ်
     document.getElementById("mainLogo").addEventListener("dblclick", () => {
-        let p = prompt("Password ရိုက်ပါ:");
-        if(p === ADMIN_PASS) {
-            isAdmin = true;
-            localStorage.setItem("isLogged", "true");
-            location.reload();
+        if(!isAdmin) {
+            let p = prompt("Password ရိုက်ပါ:");
+            if(p === ADMIN_PASS) {
+                isAdmin = true;
+                localStorage.setItem("isLogged", "true");
+                render();
+            }
+        } else {
+            isAdmin = false;
+            localStorage.setItem("isLogged", "false");
+            render();
         }
     });
 
-    // Handle Form & File Conversion
+    // ပုံကို Storage မပြည့်အောင် Size ချုံ့ပေးတဲ့ Function
+    async function compressImage(file) {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = (event) => {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 600; // ပုံကို Width 600 အထိပဲ ထားမယ်
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > MAX_WIDTH) {
+                        height *= MAX_WIDTH / width;
+                        width = MAX_WIDTH;
+                    }
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    resolve(canvas.toDataURL('image/jpeg', 0.7)); // Quality 70% နဲ့ ချုံ့မယ်
+                };
+            };
+        });
+    }
+
     const toBase64 = file => new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.readAsDataURL(file);
@@ -87,7 +120,7 @@
         const imgFile = document.getElementById("imgInput").files[0];
         const docFile = document.getElementById("fileInput").files[0];
 
-        let imgData = imgFile ? await toBase64(imgFile) : "";
+        let imgData = imgFile ? await compressImage(imgFile) : "";
         let docData = docFile ? await toBase64(docFile) : "";
         let fileName = docFile ? docFile.name : "";
 
@@ -97,27 +130,30 @@
         
         try {
             localStorage.setItem("myPosts", JSON.stringify(posts));
-            alert("တင်ပြီးပါပြီ!");
-            location.reload();
+            document.getElementById("uploadForm").reset();
+            render();
+            window.scrollTo(0, document.body.scrollHeight);
         } catch(err) {
-            alert("Storage ပြည့်နေလို့ ဖိုင်အဟောင်းတချို့ အရင်ဖျက်ပေးပါ။");
+            alert("ဖိုင်ဆိုဒ်အရမ်းကြီးနေပါတယ်။ ဖိုင်အဟောင်းတချို့ ဖျက်ပေးပါ။");
         }
     });
 
     function render() {
-        if(isAdmin) document.getElementById("adminPanel").style.display = "block";
+        // Admin Panel ပြမပြ စစ်ဆေးခြင်း
+        document.getElementById("adminPanel").style.display = isAdmin ? "block" : "none";
+        
         let posts = JSON.parse(localStorage.getItem("myPosts") || "[]");
         const area = document.getElementById("displayArea");
         
         area.innerHTML = posts.map(p => `
             <div class="ad-card">
-                ${isAdmin ? `<button class="del-btn" style="display:block" onclick="del(${p.id})">ဖျက်မည်</button>` : ''}
+                ${isAdmin ? `<button class="del-btn" onclick="del(${p.id})">ဖျက်မည်</button>` : ''}
                 ${p.imgData ? `<img src="${p.imgData}" class="ad-img">` : ''}
                 <div class="ad-content">
                     <h4 class="ad-title">${p.title}</h4>
                     <p>${p.desc}</p>
                     <div class="price">${p.price}</div>
-                    ${p.docData ? `<a href="${p.docData}" download="${p.fileName}" class="file-link">📁 ဖိုင်ဒေါင်းရန် (${p.fileName})</a>` : ''}
+                    ${p.docData ? `<a href="${p.docData}" download="${p.fileName}" class="file-link">📁 Download: ${p.fileName}</a>` : ''}
                 </div>
             </div>
         `).join('');
@@ -131,10 +167,21 @@
         }
     };
 
-    render();
+    // Back Button ကို Web ထဲမှာတင် ရှိနေအောင် လုပ်ပေးခြင်း
+    window.addEventListener('load', () => {
+        render();
+        history.pushState({page: 1}, "", "");
+    });
 
-    // Back button behavior
-    window.onpopstate = () => render();
+    window.onpopstate = function(event) {
+        if(isAdmin) {
+            isAdmin = false;
+            localStorage.setItem("isLogged", "false");
+            render();
+            history.pushState({page: 1}, "", "");
+        }
+    };
 </script>
 </body>
 </html>
+
